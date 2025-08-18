@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package sim_msg;
+
+message Request {
+  string id = 1;          // Unique identifier for the request
+  string content = 2;     // Content of the request
+  double timestamp_s = 3; // Timestamp of the request, unis seconds
+}
+
+message Response {
+  string id = 1; // Unique identifier for the response, matching the request
+  string content = 2;     // Content of the response
+  double timestamp_s = 3; // Timestamp of the response, unis seconds
+}
