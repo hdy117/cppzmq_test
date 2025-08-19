@@ -89,7 +89,7 @@
  */
 
 std::atomic<bool> stop_server_flag(false);
-const bool enable_empty_frame = true; // 是否启用空帧
+const bool enable_empty_frame = false; // 是否启用空帧
 
 enum class ErrCode {
   OK = 0,
