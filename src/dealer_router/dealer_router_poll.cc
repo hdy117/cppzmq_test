@@ -178,23 +178,34 @@ void dealer_client(zmq::context_t &context, int client_id) {
     client_socket.connect(connect_address.c_str());
     LOG(INFO) << "client connect to server id:" << client_id;
 
-    // 发送多个请求
-    for (int i = 0; i < 1; ++i) {
-      // msg content
-      std::string request = "this is client id: " + std::to_string(client_id);
-      dealer_req_msg(client_socket, enable_empty_frame, request, identity);
-      LOG(INFO) << "client id: " << identity << " sent message: " << request;
+    // 发送1个请求
+    // msg content
+    std::string request = "this is client id: " + std::to_string(client_id);
+    dealer_req_msg(client_socket, enable_empty_frame, request, identity);
+    LOG(INFO) << "client id: " << identity << " sent message: " << request;
 
-      // recv from server
-      std::string response;
-      dealer_recv_msg(client_socket, enable_empty_frame, response);
-      LOG(INFO) << "client id: " << client_id << " got response: " << response;
+    // recv from server
+    // recv poll on socket
+    zmq::pollitem_t items[] = {{client_socket, 0, ZMQ_POLLIN, 0}};
 
-      // 模拟工作负载
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // poll on the socket every 10ms, up to 10 times
+    int counter = 0;
+    while (counter < 10) {
+      int rc = zmq::poll(items, 1, 10);
+      if (rc < 0) {
+        throw std::runtime_error("zmq poll error");
+      }
+      if (items[0].revents & ZMQ_POLLIN) {
+        std::string response;
+        dealer_recv_msg(client_socket, enable_empty_frame, response);
+        LOG(INFO) << "client id: " << client_id
+                  << " got response: " << response;
+      }
+      counter++;
     }
 
     // 关闭client套接字
+    LOG(INFO) << "client id: " << client_id << " closed";
     client_socket.close();
   } catch (const std::exception &e) {
     std::cerr << "client " << client_id << " error: " << e.what() << std::endl;
@@ -224,10 +235,13 @@ void router_server(zmq::context_t &context) {
         LOG(INFO) << "server got request from client id: " << client_identity
                   << " content: " << request_msg << std::endl;
 
-        // 发送响应内容
-        std::string response = "server processed " + request_msg;
-        router_reply_msg(server_socket, enable_empty_frame, client_identity,
-                         response);
+        // 发送响应内容，多次回复
+        for (auto i = 0; i < 3; ++i) {
+          std::string response =
+              "server processed " + request_msg + " " + std::to_string(i);
+          router_reply_msg(server_socket, enable_empty_frame, client_identity,
+                           response);
+        }
       }
 
       // 模拟处理请求
