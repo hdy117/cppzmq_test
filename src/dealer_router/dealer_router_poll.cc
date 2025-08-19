@@ -195,6 +195,8 @@ void dealer_client(zmq::context_t &context, int client_id) {
       if (rc < 0) {
         throw std::runtime_error("zmq poll error");
       }
+
+      // recv msg if polled on socket
       if (items[0].revents & ZMQ_POLLIN) {
         std::string response;
         dealer_recv_msg(client_socket, enable_empty_frame, response);
