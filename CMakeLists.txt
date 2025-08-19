@@ -38,3 +38,4 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/message sim_msg_files)
 add_library(${sim_msg} STATIC ${sim_msg_files})
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/req_rep)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/dealer_router)
